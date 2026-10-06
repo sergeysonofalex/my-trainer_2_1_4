@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Проверка знаний: Файлы и папки</title>
+<style>
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: "Segoe UI", "Trebuchet MS", Arial, sans-serif;
+    font-size: 18px;
+    background: linear-gradient(160deg, #e9f4ff 0%, #f6fbff 45%, #eefaf0 100%);
+    color: #1a237e;
+    min-height: 100vh;
+  }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ---------- ЭКРАН АВТОРИЗАЦИИ ---------- */
+  #screen-auth.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .auth-card {
+    background: #ffffff;
+    border-radius: 26px;
+    border: 3px solid #d7e6f7;
+    box-shadow: 0 14px 40px rgba(26, 35, 126, 0.15);
+    padding: 40px 48px 34px;
+    max-width: 680px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .auth-emoji { font-size: 64px; line-height: 1; margin-bottom: 8px; }
+
+  .auth-card h1 {
+    font-size: 34px;
+    margin: 6px 0 6px;
+    color: #10316b;
+    line-height: 1.2;
+  }
+
+  .auth-sub {
+    font-size: 20px;
+    color: #5b7099;
+    margin: 0 0 26px;
+  }
+
+  .auth-label {
+    display: block;
+    font-size: 22px;
+    font-weight: bold;
+    color: #1a237e;
+    margin-bottom: 10px;
+    text-align: left;
+  }
+
+  #studentName {
+    width: 100%;
+    border: 3px solid #28a745;
+    background: #f0fff4;
+    padding: 12px;
+    font-size: 20px;
+    font-family: inherit;
+    border-radius: 12px;
+    text-align: center;
+    color: #14532d;
+    font-weight: 600;
+    outline: none;
+    margin-bottom: 24px;
+  }
+
+  #studentName:focus {
+    box-shadow: 0 0 0 5px rgba(40, 167, 69, 0.22);
+  }
+
+  .auth-note {
+    font-size: 16px;
+    color: #7b8aa5;
+    margin: 16px 0 0;
+  }
+
+  /* ---------- КНОПКИ ---------- */
+  .btn {
+    font-family: inherit;
+    font-size: 22px;
+    font-weight: bold;
+    padding: 14px 30px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    transition: transform .12s, background .15s, box-shadow .12s;
+  }
+
+  .btn-big { font-size: 26px; padding: 16px 46px; width: 100%; }
+
+  .btn-green { background: #28a745; color: #fff; box-shadow: 0 6px 0 #1b7a31; }
+  .btn-green:hover:not(:disabled) { background: #2fb84e; }
+  .btn-green:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 3px 0 #1b7a31; }
+  .btn-green:disabled { background: #c3cdc5; color: #f2f2f2; box-shadow: 0 6px 0 #a9b3ab; cursor: not-allowed; }
+
+  .btn-next { background: #1a73e8; color: #fff; box-shadow: 0 6px 0 #1257b0; }
+  .btn-next:hover { background: #2b82f0; }
+  .btn-next:active { transform: translateY(3px); box-shadow: 0 3px 0 #1257b0; }
+
+  .btn-check { background: #1a73e8; color: #fff; box-shadow: 0 6px 0 #1257b0; }
+  .btn-check:hover:not(:disabled) { background: #2b82f0; }
+  .btn-check:disabled { background: #c6d0dc; color: #f3f6f9; box-shadow: 0 6px 0 #aab5c1; cursor: not-allowed; }
+
+  .btn-grey { background: #eceff4; color: #3c4a63; box-shadow: 0 6px 0 #ccd4de; }
+  .btn-grey:hover { background: #e1e7ef; }
+  .btn-grey:active { transform: translateY(3px); box-shadow: 0 3px 0 #ccd4de; }
+
+  /* ---------- ОБЩАЯ РАЗМЕТКА ---------- */
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 22px 24px 70px;
+  }
+
+  /* ---------- ЭКРАН ТЕСТА ---------- */
+  .quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: #fff;
+    border: 2px solid #e3ecf7;
+    border-radius: 16px;
+    padding: 14px 22px;
+    font-size: 20px;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(26, 35, 126, 0.08);
+    margin-bottom: 14px;
+  }
+
+  .stage-badge {
+    background: #e8f0fe;
+    color: #1a237e;
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-size: 19px;
+  }
+
+  .progress {
+    height: 16px;
+    background: #dfe9f5;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 22px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #28a745, #7ed957);
+    transition: width .35s ease;
+  }
+
+  /* ---------- КАРТОЧКА ВОПРОСА ---------- */
+  .card {
+    background: #fff;
+    border: 2px solid #e3ecf7;
+    border-radius: 22px;
+    padding: 26px 32px 28px;
+    box-shadow: 0 10px 30px rgba(26, 35, 126, 0.10);
+  }
+
+  .q-text {
+    font-size: 26px;
+    line-height: 1.35;
+    color: #10316b;
+    margin: 0 0 22px;
+    font-weight: 700;
+  }
+
+  /* --- Варианты ответа --- */
+  .options { display: flex; flex-direction: column; gap: 14px; }
+
+  .option {
+    font-family: inherit;
+    font-size: 22px;
+    font-weight: 600;
+    padding: 16px 24px;
+    border-radius: 14px;
+    border: 3px solid #b9d4f0;
+    background: #f7fbff;
+    color: #12305e;
+    text-align: left;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, transform .12s;
+  }
+
+  .option:hover:not(.locked) { background: #e3f0ff; border-color: #5b9bd5; transform: translateX(4px); }
+  .option.right { background: #e6f8ea; border-color: #28a745; color: #1b5e20; }
+  .option.wrong { background: #fdeaea; border-color: #e53935; color: #b71c1c; }
+  .option.locked { pointer-events: none; }
+
+  /* --- Да / Нет --- */
+  .tf-row { display: flex; gap: 22px; justify-content: center; }
+  .tf-btn { flex: 1; max-width: 300px; text-align: center; font-size: 28px; padding: 22px 16px; }
+
+  /* --- Контекстное меню --- */
+  .ctx-menu {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 340px;
+    padding: 8px;
+    background: #f4f6f9;
+    border: 2px solid #c8d3e0;
+    border-radius: 12px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+  }
+
+  .ctx-item {
+    font-family: inherit;
+    font-size: 20px;
+    font-weight: 600;
+    text-align: left;
+    padding: 11px 18px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #12305e;
+    cursor: pointer;
+    transition: background .12s;
+  }
+
+  .ctx-item:hover:not(.locked) { background: #dce9f7; }
+  .ctx-item.right { background: #e6f8ea; color: #1b5e20; }
+  .ctx-item.wrong { background: #fdeaea; color: #b71c1c; }
+  .ctx-item.locked { pointer-events: none; }
+
+  /* --- Соответствия --- */
+  .match-cols { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; }
+  .match-col { display: flex; flex-direction: column; gap: 14px; flex: 1 1 300px; max-width: 380px; }
+
+  .match-item {
+    font-family: inherit;
+    font-size: 21px;
+    font-weight: 600;
+    padding: 16px 18px;
+    border-radius: 14px;
+    border: 3px solid #b9d4f0;
+    background: #f7fbff;
+    color: #12305e;
+    cursor: pointer;
+    text-align: center;
+    transition: background .15s, border-color .15s;
+  }
+
+  .match-item:hover { background: #e3f0ff; }
+  .match-item.sel { background: #fff3cd; border-color: #ffc107; }
+  .match-item.paired { background: #e8f0fe; border-color: #5b9bd5; }
+  .match-item.right { background: #e6f8ea; border-color: #28a745; color: #1b5e20; }
+  .match-item.wrong { background: #fdeaea; border-color: #e53935; color: #b71c1c; }
+
+  /* --- Сортировка --- */
+  .tray {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    min-height: 84px;
+    padding: 14px;
+    margin-bottom: 22px;
+    background: #fbfdff;
+    border: 3px dashed #b9d4f0;
+    border-radius: 16px;
+  }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+    font-size: 20px;
+    font-weight: 600;
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: 3px solid #b9d4f0;
+    background: #fff;
+    color: #12305e;
+    cursor: pointer;
+    transition: transform .12s, background .15s, border-color .15s;
+  }
+
+  .file-item .fi-icon { font-size: 24px; }
+  .file-item.sel { background: #fff3cd; border-color: #ffc107; transform: scale(1.05); }
+  .file-item.right { background: #e6f8ea; border-color: #28a745; }
+  .file-item.wrong { background: #fdeaea; border-color: #e53935; }
+
+  .folders { display: flex; gap: 24px; flex-wrap: wrap; }
+
+  .folder {
+    flex: 1 1 280px;
+    min-height: 170px;
+    padding: 14px;
+    background: #fffdf3;
+    border: 3px solid #ffd166;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+
+  .folder:hover { background: #fff8e1; }
+
+  .folder-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 23px;
+    font-weight: bold;
+    color: #8a6100;
+    margin-bottom: 12px;
+  }
+
+  .folder-icon { font-size: 28px; }
+
+  .folder-body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-height: 70px;
+    padding: 10px;
+    background: #fff;
+    border-radius: 12px;
+  }
+
+  .folder-body .ph {
+    flex-basis: 100%;
+    color: #a8b6c8;
+    font-size: 16px;
+    font-style: italic;
+  }
+
+  .folder-body.has-items .ph { display: none; }
+
+  /* --- Обратная связь и навигация --- */
+  .feedback {
+    margin-top: 20px;
+    padding: 16px 22px;
+    border-radius: 14px;
+    font-size: 21px;
+    line-height: 1.4;
+    font-weight: 600;
+  }
+
+  .feedback.ok { background: #e6f8ea; border: 3px solid #28a745; color: #1b5e20; }
+  .feedback.no { background: #fdeaea; border: 3px solid #e53935; color: #b71c1c; }
+
+  .nav { display: flex; justify-content: flex-end; gap: 14px; margin-top: 22px; }
+
+  /* ---------- ЭКРАН ПРЕДЛОЖЕНИЯ ЭТАПА 2 ---------- */
+  #screen-offer.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .offer-card { max-width: 760px; width: 100%; text-align: center; padding: 40px 44px; }
+  .offer-emoji { font-size: 70px; line-height: 1; }
+  .offer-card h2 { font-size: 34px; margin: 10px 0 14px; color: #10316b; }
+  .offer-score { font-size: 26px; margin: 0 0 18px; color: #1b5e20; }
+  .offer-score b { background: #e6f8ea; padding: 4px 16px; border-radius: 10px; border: 2px solid #28a745; }
+  .offer-question { font-size: 27px; font-weight: bold; color: #7a4b00; margin: 0 0 30px; }
+  .offer-btns { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
+
+  /* ---------- ЭКРАН РЕЗУЛЬТАТОВ ---------- */
+  .result-card { text-align: center; padding: 34px 40px 30px; }
+
+  .res-label {
+    font-size: 20px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #7b8aa5;
+    margin: 0 0 10px;
+  }
+
+  #resName {
+    display: inline-block;
+    font-size: 36px;
+    font-weight: bold;
+    color: #1a237e;
+    background: #e8f0fe;
+    border: 3px solid #b9d4f0;
+    padding: 8px 30px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    word-break: break-word;
+  }
+
+  .res-score-wrap { margin-bottom: 14px; }
+
+  #resScore {
+    display: inline-block;
+    font-size: 48px;
+    font-weight: bold;
+    color: #7a4b00;
+    background: #fff3cd;
+    border: 4px solid #ffc107;
+    padding: 15px 34px;
+    border-radius: 12px;
+    line-height: 1.2;
+  }
+
+  .res-breakdown { font-size: 20px; color: #4b5b78; margin: 10px 0 30px; }
+
+  .res-table-title { font-size: 26px; color: #10316b; margin: 0 0 14px; }
+
+  table.skills {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 26px;
+    font-size: 20px;
+  }
+
+  table.skills th {
+    background: #e8f0fe;
+    color: #1a237e;
+    padding: 14px 18px;
+    text-align: left;
+    border: 2px solid #cfe0f5;
+    font-size: 21px;
+  }
+
+  table.skills td {
+    padding: 13px 18px;
+    border: 2px solid #e3ecf7;
+    text-align: left;
+  }
+
+  table.skills tr:nth-child(even) td { background: #fafcff; }
+
+  td.skill-res { font-weight: bold; white-space: nowrap; width: 34%; }
+  td.skill-res.good { color: #1b5e20; }
+  td.skill-res.bad { color: #c62828; }
+  td.skill-res.neutral { color: #8a97ab; font-weight: 600; }
+
+  .res-actions { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+
+  .warning {
+    margin-top: 26px;
+    padding: 18px 22px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: #d32f2f;
+    background: #fff3cd;
+    border: 4px dashed #d32f2f;
+    border-radius: 16px;
+    animation: pulse 1.6s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.015); }
+  }
+
+  @media (max-width: 900px) {
+    .auth-card { padding: 30px 26px; }
+    .auth-card h1 { font-size: 27px; }
+    .q-text { font-size: 22px; }
+    .option { font-size: 19px; }
+    #resScore { font-size: 34px; }
+    #resName { font-size: 28px; }
+    .warning { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ 1. ЭКРАН АВТОРИЗАЦИИ ============ -->
+<section id="screen-auth" class="screen active">
+  <div class="auth-card">
+    <div class="auth-emoji">🗂️</div>
+    <h1>Проверка знаний: Файлы и папки</h1>
+    <p class="auth-sub">Цифровая грамотность и ИИ · 2 класс</p>
+
+    <label class="auth-label" for="studentName">Имя ученика</label>
+    <input id="studentName" type="text" placeholder="" autocomplete="off" spellcheck="false" maxlength="30">
+
+    <button id="startBtn" class="btn btn-green btn-big" disabled>Начать тест</button>
+    <p class="auth-note">Кнопка станет активной, когда ты напишешь хотя бы 2 буквы своего имени.</p>
+  </div>
+</section>
+
+<!-- ============ 2. ЭКРАН ТЕСТА ============ -->
+<section id="screen-quiz" class="screen">
+  <div class="wrap">
+    <div class="quiz-header">
+      <div>👦 <span id="hdrName">Ученик</span></div>
+      <div class="stage-badge" id="hdrStage">Этап 1 · Базовый уровень</div>
+      <div id="hdrProgress">Задание 1 из 8</div>
+    </div>
+    <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+    <div id="quizArea"></div>
+  </div>
+</section>
+
+<!-- ============ 3. ПРЕДЛОЖЕНИЕ ЭТАПА 2 ============ -->
+<section id="screen-offer" class="screen">
+  <div class="offer-card card">
+    <div class="offer-emoji">🏆</div>
+    <h2>Этап 1 пройден!</h2>
+    <p class="offer-score">Твой результат: <b id="offerScore">0 из 8</b></p>
+    <p class="offer-question">Хочешь получить 10 баллов?<br>Пройди супер-задания!</p>
+    <div class="offer-btns">
+      <button class="btn btn-green" id="goStage2">Да, хочу 10 баллов!</button>
+      <button class="btn btn-grey" id="skipStage2">Нет, показать результат</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. ЭКРАН РЕЗУЛЬТАТОВ ============ -->
+<section id="screen-result" class="screen">
+  <div class="wrap">
+    <div class="card result-card">
+      <p class="res-label">Имя ученика</p>
+      <div id="resName">—</div>
+
+      <div class="res-score-wrap">
+        <div id="resScore">Оценка: 0 из 10 баллов</div>
+      </div>
+
+      <p class="res-breakdown" id="resBreakdown"></p>
+
+      <h3 class="res-table-title">Мои успехи</h3>
+      <table class="skills">
+        <thead>
+          <tr><th>Что проверяли</th><th>Результат</th></tr>
+        </thead>
+        <tbody id="skillsBody"></tbody>
+      </table>
+
+      <div class="res-actions">
+        <button class="btn btn-next" id="restartBtn">Пройти ещё раз</button>
+      </div>
+    </div>
+
+    <div class="warning">⚠️ Не закрывай результат, пока учитель не проверит!</div>
+  </div>
+</section>
+
+<script>
+/* =======================================================================
+   ДАННЫЕ: ЭТАП 1 — «Базовый уровень» (8 заданий, макс. 8 баллов)
+   ======================================================================= */
+const STAGE1 = [
+  {
+    type: 'mc',
+    skill: 'Знает, что такое файл и папка',
+    text: 'Что помогает сложить файлы по порядку на компьютере?',
+    options: ['Папка', 'Корзина', 'Мышка'],
+    correct: 0,
+    good: 'Да! Папка — это «домик» для файлов, в ней они лежат по порядку.',
+    bad: 'Правильный ответ: Папка. Именно папка помогает хранить файлы по порядку.'
+  },
+  {
+    type: 'tf',
+    skill: 'Знает, что такое файл и папка',
+    text: 'Файл — это музыка, картинка или текст. Верно?',
+    correct: true,
+    good: 'Верно! В файлах хранится разная информация: текст, картинки, музыка, видео.',
+    bad: 'Правильный ответ: Да. В файлах хранится текст, картинки, музыка и видео.'
+  },
+  {
+    type: 'match',
+    skill: 'Различает типы файлов',
+    text: 'Соедини тип файла с его названием: нажми на карточку слева, а потом на карточку справа.',
+    left: [
+      { id: 'text',  text: '📝 Текстовый файл' },
+      { id: 'img',   text: '🎨 Графический файл' },
+      { id: 'music', text: '🎵 Музыкальный файл' }
+    ],
+    right: [
+      { id: 'text',  text: 'Сказка.txt' },
+      { id: 'img',   text: 'Рисунок.png' },
+      { id: 'music', text: 'Песня.mp3' }
+    ],
+    good: 'Отлично! Ты правильно определил типы файлов.',
+    bad: 'Правильно так: Сказка.txt — текстовый файл, Рисунок.png — графический, Песня.mp3 — музыкальный.'
+  },
+  {
+    type: 'sort',
+    skill: 'Умеет раскладывать файлы по папкам',
+    text: 'Разложи файлы по папкам: нажми на файл, а потом на нужную папку.',
+    folders: [
+      { id: 'photo', name: 'Фото', icon: '📁' },
+      { id: 'music', name: 'Музыка', icon: '📁' }
+    ],
+    items: [
+      { id: 'f1', text: 'Кот.jpg',    icon: '🐱', folder: 'photo' },
+      { id: 'f2', text: 'Песня.mp3',  icon: '🎵', folder: 'music' },
+      { id: 'f3', text: 'Цветок.png', icon: '🌸', folder: 'photo' }
+    ],
+    good: 'Молодец! Картинки — в папку «Фото», музыка — в папку «Музыка».',
+    bad: 'Правильно: Кот.jpg и Цветок.png — в «Фото», Песня.mp3 — в «Музыка».'
+  },
+  {
+    type: 'mc',
+    skill: 'Знает, куда попадают удалённые файлы',
+    text: 'Куда попадает файл, который ты удалил?',
+    options: ['В Корзину', 'В папку «Музыка»', 'Он сразу исчезает навсегда'],
+    correct: 0,
+    good: 'Верно! Удалённый файл попадает в Корзину.',
+    bad: 'Правильный ответ: в Корзину. Оттуда файл ещё можно вернуть.'
+  },
+  {
+    type: 'tf',
+    skill: 'Знает правила хранения файлов',
+    text: 'Можно ли в одной папке хранить два файла с одинаковыми именами?',
+    correct: false,
+    good: 'Верно! В одной папке не может быть двух файлов с одинаковым именем.',
+    bad: 'Правильный ответ: Нет. В одной папке не может быть двух файлов с одинаковым именем.'
+  },
+  {
+    type: 'mc',
+    skill: 'Различает типы файлов',
+    text: 'В какой программе можно открыть файл «Сказка.txt»?',
+    options: ['Блокнот', 'Калькулятор', 'Корзина'],
+    correct: 0,
+    good: 'Точно! Текстовый файл открывается в Блокноте.',
+    bad: 'Правильный ответ: Блокнот. Это программа для работы с текстом.'
+  },
+  {
+    type: 'tf',
+    skill: 'Знает, что такое файл и папка',
+    text: 'Папка может содержать внутри другие папки. Верно?',
+    correct: true,
+    good: 'Да! В папке могут лежать и файлы, и другие папки.',
+    bad: 'Правильный ответ: Да. В папке могут лежать и файлы, и другие папки.'
+  }
+];
+
+/* =======================================================================
+   ДАННЫЕ: ЭТАП 2 — «Супер-задания» (4 задания, добавляют баллы до 10)
+   ======================================================================= */
+const STAGE2 = [
+  {
+    type: 'mc',
+    menuStyle: true,
+    skill: 'Умеет пользоваться контекстным меню',
+    text: 'Ты нажал ПРАВОЙ кнопкой мыши на файл. Какой пункт меню нужно выбрать, чтобы удалить файл?',
+    options: ['Открыть', 'Копировать', 'Удалить', 'Свойства'],
+    correct: 2,
+    good: 'Верно! Пункт «Удалить» отправит файл в Корзину.',
+    bad: 'Правильный ответ: «Удалить». Этот пункт отправляет файл в Корзину.'
+  },
+  {
+    type: 'mc',
+    skill: 'Понимает разницу копирования и перемещения',
+    text: 'Нужно, чтобы файл остался на старом месте И появился в новой папке. Что выбрать?',
+    options: ['Копировать', 'Вырезать', 'Удалить'],
+    correct: 0,
+    good: 'Точно! При копировании файл остаётся на месте и появляется в новом.',
+    bad: 'Правильный ответ: «Копировать». Тогда файл останется на месте и появится в новой папке.'
+  },
+  {
+    type: 'mc',
+    skill: 'Знает наименьшую единицу информации',
+    text: 'Какая самая маленькая единица информации?',
+    options: ['Бит', 'Файл', 'Папка'],
+    correct: 0,
+    good: 'Верно! Самый маленький «кирпичик» информации — это бит.',
+    bad: 'Правильный ответ: Бит. Бит — самая маленькая единица информации.'
+  },
+  {
+    type: 'mc',
+    menuStyle: true,
+    skill: 'Умеет пользоваться контекстным меню',
+    text: 'Ты нажал ПРАВОЙ кнопкой мыши на пустом месте рабочего стола. Как создать новую папку?',
+    options: ['Обновить', 'Создать', 'Параметры экрана', 'Вставить'],
+    correct: 1,
+    good: 'Верно! «Создать» → «Папку».',
+    bad: 'Правильный ответ: «Создать», а затем выбрать «Папку».'
+  }
+];
+
+/* =======================================================================
+   СПИСОК НАВЫКОВ ДЛЯ ТАБЛИЦЫ РЕЗУЛЬТАТОВ
+   ======================================================================= */
+const SKILL_ORDER = [
+  'Знает, что такое файл и папка',
+  'Различает типы файлов',
+  'Умеет раскладывать файлы по папкам',
+  'Знает, куда попадают удалённые файлы',
+  'Знает правила хранения файлов',
+  'Умеет пользоваться контекстным меню',
+  'Понимает разницу копирования и перемещения',
+  'Знает наименьшую единицу информации'
+];
+
+/* =======================================================================
+   СОСТОЯНИЕ
+   ======================================================================= */
+const state = {
+  name: '',
+  stage: 1,
+  queue: [],
+  index: 0,
+  stage1Score: 0,
+  stage2Score: 0,
+  playedStage2: false,
+  log: []
+};
+
+let answered = false;
+
+/* =======================================================================
+   ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+   ======================================================================= */
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* =======================================================================
+   ЭКРАН АВТОРИЗАЦИИ
+   ======================================================================= */
+const nameInput = document.getElementById('studentName');
+const startBtn = document.getElementById('startBtn');
+
+nameInput.addEventListener('input', () => {
+  startBtn.disabled = nameInput.value.trim().length < 2;
+});
+
+nameInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !startBtn.disabled) startTest();
+});
+
+startBtn.addEventListener('click', startTest);
+
+function startTest() {
+  const n = nameInput.value.trim();
+  if (n.length < 2) return;
+
+  state.name = n;
+  state.stage = 1;
+  state.queue = STAGE1.slice();
+  state.index = 0;
+  state.stage1Score = 0;
+  state.stage2Score = 0;
+  state.playedStage2 = false;
+  state.log = [];
+
+  document.getElementById('hdrName').textContent = state.name;
+  show('screen-quiz');
+  renderCurrent();
+}
+
+/* =======================================================================
+   ЛОГИКА ТЕСТА
+   ======================================================================= */
+function renderCurrent() {
+  const q = state.queue[state.index];
+
+  document.getElementById('hdrStage').textContent =
+    state.stage === 1 ? 'Этап 1 · Базовый уровень' : 'Этап 2 · Супер-задания';
+  document.getElementById('hdrProgress').textContent =
+    'Задание ' + (state.index + 1) + ' из ' + state.queue.length;
+  document.getElementById('progressFill').style.width =
+    ((state.index) / state.queue.length * 100) + '%';
+
+  renderQuestion(q);
+}
+
+function afterAnswer(isCorrect, q) {
+  state.log.push({ skill: q.skill, correct: isCorrect });
+  if (state.stage === 1) {
+    if (isCorrect) state.stage1Score++;
+  } else {
+    if (isCorrect) state.stage2Score++;
+  }
+  document.getElementById('progressFill').style.width =
+    ((state.index + 1) / state.queue.length * 100) + '%';
+}
+
+function finishQuestion(q, isCorrect, fb, nav) {
+  afterAnswer(isCorrect, q);
+
+  fb.style.display = 'block';
+  fb.className = 'feedback ' + (isCorrect ? 'ok' : 'no');
+  fb.textContent = (isCorrect ? '✅ ' : '❌ ') + (isCorrect ? q.good : q.bad);
+
+  const isLast = (state.index === state.queue.length - 1);
+  let label = 'Дальше →';
+  if (isLast) label = (state.stage === 1) ? 'Завершить этап 1' : 'Показать результат';
+
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-next';
+  btn.textContent = label;
+  btn.onclick = nextQuestion;
+  nav.appendChild(btn);
+
+  btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function nextQuestion() {
+  state.index++;
+  if (state.index < state.queue.length) {
+    renderCurrent();
+  } else {
+    if (state.stage === 1) {
+      showOffer();
+    } else {
+      showResult();
+    }
+  }
+}
+
+/* =======================================================================
+   ОТРИСОВКА ВОПРОСОВ
+   ======================================================================= */
+function renderQuestion(q) {
+  answered = false;
+
+  const area = document.getElementById('quizArea');
+  area.innerHTML = '';
+
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const title = document.createElement('h2');
+  title.className = 'q-text';
+  title.textContent = q.text;
+  card.appendChild(title);
+
+  const body = document.createElement('div');
+  body.className = 'q-body';
+  card.appendChild(body);
+
+  const fb = document.createElement('div');
+  fb.className = 'feedback';
+  fb.style.display = 'none';
+  card.appendChild(fb);
+
+  const nav = document.createElement('div');
+  nav.className = 'nav';
+  card.appendChild(nav);
+
+  area.appendChild(card);
+
+  if (q.type === 'mc') buildMC(q, body, fb, nav);
+  else if (q.type === 'tf') buildTF(q, body, fb, nav);
+  else if (q.type === 'match') buildMatch(q, body, fb, nav);
+  else if (q.type === 'sort') buildSort(q, body, fb, nav);
+}
+
+/* --- Выбор одного ответа --- */
+function buildMC(q, body, fb, nav) {
+  const wrap = document.createElement('div');
+  wrap.className = q.menuStyle ? 'ctx-menu' : 'options';
+
+  const buttons = [];
+
+  q.options.forEach((text, i) => {
+    const b = document.createElement('button');
+    b.className = q.menuStyle ? 'ctx-item' : 'option';
+    b.textContent = (q.menuStyle ? '▸  ' : '') + text;
+
+    b.onclick = () => {
+      if (answered) return;
+      answered = true;
+
+      buttons.forEach((bb, j) => {
+        bb.classList.add('locked');
+        if (j === q.correct) bb.classList.add('right');
+      });
+      if (i !== q.correct) b.classList.add('wrong');
+
+      finishQuestion(q, i === q.correct, fb, nav);
+    };
+
+    buttons.push(b);
+    wrap.appendChild(b);
+  });
+
+  body.appendChild(wrap);
+}
+
+/* --- Верно / Неверно --- */
+function buildTF(q, body, fb, nav) {
+  const wrap = document.createElement('div');
+  wrap.className = 'tf-row';
+
+  const make = (label, value) => {
+    const b = document.createElement('button');
+    b.className = 'option tf-btn';
+    b.textContent = label;
+    b.onclick = () => {
+      if (answered) return;
+      answered = true;
+
+      const all = wrap.querySelectorAll('.option');
+      all.forEach(x => x.classList.add('locked'));
+
+      const ok = (value === q.correct);
+      b.classList.add(ok ? 'right' : 'wrong');
+
+      if (!ok) {
+        const correctIndex = q.correct ? 0 : 1;
+        all[correctIndex].classList.add('right');
+      }
+
+      finishQuestion(q, ok, fb, nav);
+    };
+    return b;
+  };
+
+  wrap.appendChild(make('✅ Да', true));
+  wrap.appendChild(make('❌ Нет', false));
+
+  body.appendChild(wrap);
+}
+
+/* --- Установление соответствий --- */
+function buildMatch(q, body, fb, nav) {
+  const pairs = {};
+  let selLeft = null;
+  const leftEls = {};
+  const rightEls = {};
+
+  const cols = document.createElement('div');
+  cols.className = 'match-cols';
+  const leftCol = document.createElement('div');
+  leftCol.className = 'match-col';
+  const rightCol = document.createElement('div');
+  rightCol.className = 'match-col';
+
+  const checkBtn = document.createElement('button');
+  checkBtn.className = 'btn btn-check';
+  checkBtn.textContent = 'Проверить';
+  checkBtn.disabled = true;
+
+  function refresh() {
+    checkBtn.disabled = Object.keys(pairs).length < q.left.length;
+  }
+
+  /* левая колонка — типы файлов */
+  q.left.forEach(it => {
+    const el = document.createElement('button');
+    el.className = 'match-item';
+    el.textContent = it.text;
+
+    el.onclick = () => {
+      if (answered) return;
+
+      if (pairs[it.id]) {                 // разъединить
+        const rid = pairs[it.id];
+        delete pairs[it.id];
+        el.classList.remove('paired');
+        if (rightEls[rid]) rightEls[rid].classList.remove('paired');
+        refresh();
+        return;
+      }
+
+      if (selLeft && leftEls[selLeft]) leftEls[selLeft].classList.remove('sel');
+      selLeft = it.id;
+      el.classList.add('sel');
+    };
+
+    leftEls[it.id] = el;
+    leftCol.appendChild(el);
+  });
+
+  /* правая колонка — названия файлов (перемешаны) */
+  shuffle(q.right.slice()).forEach(rit => {
+    const el = document.createElement('button');
+    el.className = 'match-item';
+    el.textContent = rit.text;
+
+    el.onclick = () => {
+      if (answered) return;
+
+      for (const lid in pairs) {
+        if (pairs[lid] === rit.id) {
+          delete pairs[lid];
+          leftEls[lid].classList.remove('paired');
+        }
+      }
+      el.classList.remove('paired');
+
+      if (!selLeft) { refresh(); return; }
+
+      pairs[selLeft] = rit.id;
+      leftEls[selLeft].classList.remove('sel');
+      leftEls[selLeft].classList.add('paired');
+      el.classList.add('paired');
+      selLeft = null;
+      refresh();
+    };
+
+    rightEls[rit.id] = el;
+    rightCol.appendChild(el);
+  });
+
+  cols.appendChild(leftCol);
+  cols.appendChild(rightCol);
+  body.appendChild(cols);
+
+  checkBtn.onclick = () => {
+    if (answered) return;
+    answered = true;
+
+    let allOk = true;
+
+    q.left.forEach(l => {
+      const rid = pairs[l.id];
+      const ok = (rid === l.id);          // id слева и справа совпадают
+      if (!ok) allOk = false;
+
+      leftEls[l.id].classList.remove('sel', 'paired');
+      leftEls[l.id].classList.add(ok ? 'right' : 'wrong');
+
+      if (rid && rightEls[rid]) {
+        rightEls[rid].classList.remove('paired');
+        rightEls[rid].classList.add(ok ? 'right' : 'wrong');
+      }
+      if (!ok && rightEls[l.id]) {
+        rightEls[l.id].classList.remove('paired', 'wrong');
+        rightEls[l.id].classList.add('right');
+      }
+    });
+
+    checkBtn.remove();
+    finishQuestion(q, allOk, fb, nav);
+  };
+
+  nav.appendChild(checkBtn);
+}
+
+/* --- Простая сортировка по папкам --- */
+function buildSort(q, body, fb, nav) {
+  const placed = {};
+  let sel = null;
+  const itemEls = {};
+  const folderBodies = {};
+
+  const tray = document.createElement('div');
+  tray.className = 'tray';
+
+  const checkBtn = document.createElement('button');
+  checkBtn.className = 'btn btn-check';
+  checkBtn.textContent = 'Проверить';
+  checkBtn.disabled = true;
+
+  function refresh() {
+    checkBtn.disabled = Object.keys(placed).length < q.items.length;
+  }
+
+  /* файлы */
+  q.items.forEach(it => {
+    const el = document.createElement('button');
+    el.className = 'file-item';
+    el.innerHTML = '<span class="fi-icon">' + it.icon + '</span><span>' + it.text + '</span>';
+
+    el.onclick = (e) => {
+      e.stopPropagation();
+      if (answered) return;
+
+      if (placed[it.id]) {               // вернуть в лоток
+        delete placed[it.id];
+        tray.appendChild(el);
+        el.classList.remove('placed', 'sel', 'right', 'wrong');
+        refresh();
+        return;
+      }
+
+      if (sel === it.id) {
+        sel = null;
+        el.classList.remove('sel');
+      } else {
+        if (sel && itemEls[sel]) itemEls[sel].classList.remove('sel');
+        sel = it.id;
+        el.classList.add('sel');
+      }
+    };
+
+    itemEls[it.id] = el;
+    tray.appendChild(el);
+  });
+
+  /* папки */
+  const foldersRow = document.createElement('div');
+  foldersRow.className = 'folders';
+
+  q.folders.forEach(f => {
+    const box = document.createElement('div');
+    box.className = 'folder';
+
+    const head = document.createElement('div');
+    head.className = 'folder-head';
+    head.innerHTML = '<span class="folder-icon">' + f.icon + '</span><span>' + f.name + '</span>';
+
+    const inside = document.createElement('div');
+    inside.className = 'folder-body';
+    inside.innerHTML = '<span class="ph">пусто — положи сюда файл</span>';
+
+    box.appendChild(head);
+    box.appendChild(inside);
+
+    box.onclick = () => {
+      if (answered || !sel) return;
+      const el = itemEls[sel];
+      placed[sel] = f.id;
+      el.classList.remove('sel');
+      el.classList.add('placed');
+      inside.appendChild(el);
+      inside.classList.add('has-items');
+      sel = null;
+      refresh();
+    };
+
+    folderBodies[f.id] = inside;
+    foldersRow.appendChild(box);
+  });
+
+  body.appendChild(tray);
+  body.appendChild(foldersRow);
+
+  checkBtn.onclick = () => {
+    if (answered) return;
+    answered = true;
+
+    let allOk = true;
+
+    q.items.forEach(it => {
+      const ok = (placed[it.id] === it.folder);
+      if (!ok) allOk = false;
+
+      const el = itemEls[it.id];
+      el.classList.remove('sel', 'placed');
+      el.classList.add(ok ? 'right' : 'wrong');
+
+      if (!ok) {                          // показать правильное место
+        folderBodies[it.folder].appendChild(el);
+        folderBodies[it.folder].classList.add('has-items');
+      }
+    });
+
+    checkBtn.remove();
+    finishQuestion(q, allOk, fb, nav);
+  };
+
+  nav.appendChild(checkBtn);
+}
+
+/* =======================================================================
+   ЭТАП 2: ПРЕДЛОЖЕНИЕ
+   ======================================================================= */
+function showOffer() {
+  document.getElementById('offerScore').textContent = state.stage1Score + ' из 8';
+  show('screen-offer');
+}
+
+document.getElementById('goStage2').addEventListener('click', () => {
+  state.stage = 2;
+  state.queue = STAGE2.slice();
+  state.index = 0;
+  state.playedStage2 = true;
+  show('screen-quiz');
+  renderCurrent();
+});
+
+document.getElementById('skipStage2').addEventListener('click', showResult);
+
+/* =======================================================================
+   ФИНАЛЬНЫЙ ЭКРАН
+   ======================================================================= */
+function showResult() {
+  const total = Math.min(10, state.stage1Score + state.stage2Score);
+
+  document.getElementById('resName').textContent = state.name;
+  document.getElementById('resScore').textContent = 'Оценка: ' + total + ' из 10 баллов';
+
+  document.getElementById('resBreakdown').textContent =
+    'Этап 1 «Базовый уровень»: ' + state.stage1Score + ' из 8 баллов · ' +
+    (state.playedStage2
+      ? 'Этап 2 «Супер-задания»: ' + state.stage2Score + ' из 4 баллов'
+      : 'Этап 2 не проходился');
+
+  buildSkillTable();
+  show('screen-result');
+}
+
+function buildSkillTable() {
+  const tbody = document.getElementById('skillsBody');
+  tbody.innerHTML = '';
+
+  SKILL_ORDER.forEach(skill => {
+    const entries = state.log.filter(l => l.skill === skill);
+
+    const tr = document.createElement('tr');
+
+    const td1 = document.createElement('td');
+    td1.textContent = skill;
+
+    const td2 = document.createElement('td');
+    td2.className = 'skill-res';
+
+    if (entries.length === 0) {
+      td2.textContent = '➖ не проверялось';
+      td2.classList.add('neutral');
+    } else if (entries.every(e => e.correct)) {
+      td2.textContent = '✅ выполнено';
+      td2.classList.add('good');
+    } else {
+      td2.textContent = '⚠️ надо повторить';
+      td2.classList.add('bad');
+    }
+
+    tr.appendChild(td1);
+    tr.appendChild(td2);
+    tbody.appendChild(tr);
+  });
+}
+
+/* =======================================================================
+   ПРОЙТИ ЕЩЁ РАЗ
+   ======================================================================= */
+document.getElementById('restartBtn').addEventListener('click', () => {
+  state.name = '';
+  state.stage = 1;
+  state.queue = [];
+  state.index = 0;
+  state.stage1Score = 0;
+  state.stage2Score = 0;
+  state.playedStage2 = false;
+  state.log = [];
+
+  nameInput.value = '';
+  startBtn.disabled = true;
+
+  show('screen-auth');
+  nameInput.focus();
+});
+
+/* Автофокус на поле имени при загрузке */
+window.addEventListener('load', () => nameInput.focus());
+</script>
+</body>
+</html>
